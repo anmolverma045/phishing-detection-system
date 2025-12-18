@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Phishing Detection System</title>
+    <style>
+        /* ===== GLOBAL FIX ===== */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.12);
+            padding: 35px;
+            border-radius: 14px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.45);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        /* ---------- INPUT PANEL ---------- */
+        .input-panel {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            padding: 18px;
+            width: 100%;
+            overflow: hidden; /* prevents overflow */
+        }
+
+        .input-header {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        textarea {
+            width: 100%;
+            max-width: 100%;
+            height: 160px;
+            padding: 14px;
+            border-radius: 10px;
+            border: none;
+            font-size: 15px;
+            outline: none;
+            resize: none;
+            background: rgba(15, 32, 39, 0.9);
+            color: #fff;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
+            overflow-x: hidden;
+        }
+
+        textarea::placeholder {
+            color: #9ca3af;
+        }
+
+        textarea:focus {
+            box-shadow: 0 0 0 2px #38bdf8;
+        }
+
+        /* ---------- BUTTON ---------- */
+        .btn-center {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        button {
+            background: #38bdf8;
+            color: #000;
+            border: none;
+            padding: 12px 36px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        button:hover {
+            background: #0ea5e9;
+            transform: scale(1.05);
+        }
+
+        /* ---------- RESULT BOX ---------- */
+        .box {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 22px;
+            margin-top: 30px;
+            border-radius: 12px;
+        }
+
+        ul { padding-left: 20px; }
+
+        /* ---------- BADGES ---------- */
+        .badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .badge-high { background: #ff4d4d; }
+        .badge-medium { background: #facc15; color: #000; }
+        .badge-low { background: #4ade80; color: #000; }
+
+        /* ---------- GAUGE ---------- */
+        .gauge-container {
+            width: 180px;
+            height: 180px;
+            margin: 20px auto;
+        }
+
+        .gauge {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gauge-inner {
+            width: 130px;
+            height: 130px;
+            background: #0f2027;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gauge-value {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .gauge-label {
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        /* ---------- COPY BUTTON ---------- */
+        .copy-btn {
+            background: #22c55e;
+            color: #000;
+            margin-top: 15px;
+        }
+
+        /* ---------- LOADER ---------- */
+        #loadingOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 32, 39, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 9999;
+        }
+
+        .spinner {
+            width: 70px;
+            height: 70px;
+            border: 6px solid rgba(255,255,255,0.2);
+            border-top: 6px solid #38bdf8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+<h2>🔐 Phishing Detection System</h2>
+
+<form method="POST" id="phishingForm">
+
+    <div class="input-panel">
+        <div class="input-header">✉️ Paste message to analyze</div>
+        <textarea id="messageBox" name="message"
+            placeholder="Paste email, SMS, or message here..."
+            required></textarea>
+    </div>
+
+    <div class="btn-center">
+        <button type="submit">Analyze Message</button>
+    </div>
+
+</form>
+
+{% if result %}
+<div class="box">
+
+    <h3>📊 Analysis Result</h3>
+
+    <p><b>Confidence Score:</b> {{ result.confidence }}%</p>
+
+    <div class="gauge-container">
+        <div class="gauge" id="riskGauge">
+            <div class="gauge-inner">
+                <div class="gauge-value">{{ result.confidence }}%</div>
+                <div class="gauge-label">Confidence</div>
+            </div>
+        </div>
+    </div>
+
+    <p style="text-align:center; font-size:13px; color:#ddd;">
+        High risk due to malicious URL detection
+    </p>
+
+    <p>
+        <b>FINAL RISK LEVEL:</b>
+        {% if result.final_risk == 'HIGH' %}
+            <span class="badge badge-high">HIGH RISK</span>
+        {% elif result.final_risk == 'MEDIUM' %}
+            <span class="badge badge-medium">MEDIUM RISK</span>
+        {% else %}
+            <span class="badge badge-low">LOW RISK</span>
+        {% endif %}
+    </p>
+
+    <h3>🔍 Why this result?</h3>
+    <ul id="reasonList">
+        {% for reason in result.explanation %}
+            <li>{{ reason }}</li>
+        {% endfor %}
+    </ul>
+
+    <button class="copy-btn" onclick="copyReport()">📋 Copy Analysis Report</button>
+
+</div>
+{% endif %}
+
+</div>
+
+<div id="loadingOverlay">
+    <div class="spinner"></div>
+    <p>Analyzing message...</p>
+</div>
+
+<script>
+    const textarea = document.getElementById("messageBox");
+    const form = document.getElementById("phishingForm");
+    const loader = document.getElementById("loadingOverlay");
+
+    textarea.addEventListener("keydown", e => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            loader.style.display = "flex";
+            form.submit();
+        }
+    });
+
+    form.addEventListener("submit", () => loader.style.display = "flex");
+
+    function copyReport() {
+        let text = "PHISHING ANALYSIS REPORT\n\n";
+        text += "Risk Level: {{ result.final_risk }}\n";
+        text += "Confidence Score: {{ result.confidence }}%\n\nReasons:\n";
+        document.querySelectorAll("#reasonList li").forEach(li => {
+            text += "- " + li.innerText + "\n";
+        });
+        navigator.clipboard.writeText(text);
+        alert("Analysis report copied!");
+    }
+
+    const confidence = {{ result.confidence if result else 0 }};
+    const gauge = document.getElementById("riskGauge");
+    if (gauge) {
+        const angle = confidence * 3.6;
+        let color = "#4ade80";
+        if (confidence >= 70) color = "#ff4d4d";
+        else if (confidence >= 40) color = "#facc15";
+        gauge.style.background = `conic-gradient(${color} ${angle}deg, #ddd ${angle}deg)`;
+    }
+</script>
+
+</body>
+</html>
