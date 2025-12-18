@@ -3,9 +3,7 @@ import time
 import base64
 
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
 API_KEY = os.getenv("VT_API_KEY")
 
 if not API_KEY:
@@ -53,5 +51,6 @@ def vt_verdict(stats):
         return "SUSPICIOUS"
     else:
         return "LEGIT"
+
 
 
